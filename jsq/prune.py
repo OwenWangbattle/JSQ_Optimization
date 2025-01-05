@@ -9,6 +9,7 @@ import torch
 def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, prune_m=0):
     CHATGLM = False
     Falcon = False
+    model.seqlen = args.seqlen
     if hasattr(model, "transformer"):
         if hasattr(model.transformer, "embedding"):
             CHATGLM = True
@@ -16,8 +17,9 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
             Falcon = True
 
     print(model)
+    print(model.state_dict().keys())
     print("loading calibdation data")
-    dataloader, _ = get_loaders("c4", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
+    dataloader, _ = get_loaders("wikitext2", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
     print("dataset loading complete")
     with torch.no_grad():
         inps, outs, attention_mask, position_ids = prepare_calibration_input(model, dataloader, device)

@@ -1,3 +1,8 @@
+# JSQ_Optimization
+      this repository is a fork of the original repository (https://github.com/uanu2002/JSQ), in order to opitmize the code and improve the performance of the JSQ.
+      the origin paper is: https://icml.cc/virtual/2024/poster/32921
+
+
 # JSQ: Compressing Large Language Models by Joint Sparsification and Quantization
 
 [[paper]([openreview.net/pdf?id=sCGRhnuMUJ](https://openreview.net/pdf?id=sCGRhnuMUJ))]
