@@ -87,7 +87,7 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
 
             ss = generate_ss(wrapped_layers[name].inp_sum / wrapped_layers[name].inp_num, subset[name].weight.data)
             ss_not_change = generate_ss_notchange(wrapped_layers[name].inp_sum / wrapped_layers[name].inp_num, subset[name].weight.data)
-            gamma = 0.25
+            gamma = 0.20
             W_metric = weight * activation
             W_metric = W_metric + args.rho * ss + gamma * (ss - ss_not_change)
 
