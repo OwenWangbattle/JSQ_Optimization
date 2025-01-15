@@ -90,7 +90,8 @@ class W8A8Linear(nn.Module):
         y = torch.functional.F.linear(q_x, self.weight, self.bias)
         q_y = self.output_quant(y)
         return q_y
-
+    
+    """
     @staticmethod
     def from_float(module, weight_quant='per_channel', act_quant='per_token', quantize_output=False, nbits=8):
         assert isinstance(module, torch.nn.Linear)
@@ -108,6 +109,29 @@ class W8A8Linear(nn.Module):
         if module.bias is not None:
             new_module.bias = module.bias
         return new_module
+    """
+    @staticmethod
+    def from_float(module, weight_quant='per_channel', act_quant='per_token', quantize_output=False, nbits=8):
+            assert isinstance(module, torch.nn.Linear)
+            print("origin type:",module.weight.type())
+            new_module = W8A8Linear(
+                module.in_features, module.out_features, module.bias is not None, act_quant=act_quant, quantize_output=quantize_output, nbits=nbits)
+            if weight_quant == 'per_channel':
+                new_module.weight = quantize_weight_per_channel_absmax(
+            module.weight, n_bits=nbits) # use 8-bit integer for weight
+            elif weight_quant == 'per_tensor':
+                new_module.weight = quantize_weight_per_tensor_absmax(
+             module.weight, n_bits=nbits)
+            else:
+                raise ValueError(f'Invalid weight_quant: {weight_quant}')
+            new_module.weight_quant_name = weight_quant
+            if module.bias is not None:
+                new_module.bias = module.bias
+            int8_weight = new_module.weight.to(torch.int8)
+            int8_weight.requires_grad = False
+            new_module.weight = torch.nn.Parameter(int8_weight,requires_grad=False)
+            print("quanted type:",new_module.weight.type())
+            return new_module
 
     def __repr__(self):
         return f'W8A8Linear({self.in_features}, {self.out_features}, bias={self.bias is not None}, weight_quant={self.weight_quant_name}, act_quant={self.act_quant_name}, output_quant={self.output_quant_name})'

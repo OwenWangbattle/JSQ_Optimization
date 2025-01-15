@@ -19,7 +19,7 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
     print(model)
     print(model.state_dict().keys())
     print("loading calibdation data")
-    dataloader, _ = get_loaders("wikitext2", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
+    dataloader, _ = get_loaders("c4", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
     print("dataset loading complete")
     with torch.no_grad():
         inps, outs, attention_mask, position_ids = prepare_calibration_input(model, dataloader, device)
@@ -80,6 +80,8 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
                     outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask, position_ids=position_ids)[0]
         for h in handles:
             h.remove()
+        
+        split_ratio=0.8
 
         for name in subset:
             print(f"pruning layer {i} name {name}")
@@ -91,6 +93,9 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
             W_metric = W_metric + args.rho * ss
 
             W_mask = (torch.zeros_like(W_metric) == 1)
+            first = int(W_metric.shape[1] * args.sparsity_ratio * split_ratio)
+            second= int(W_metric.shape[1] * args.sparsity_ratio) - first
+
             if prune_n != 0:
                 # structured n:m sparsity
                 for ii in range(W_metric.shape[1]):
@@ -98,10 +103,16 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
                         tmp = W_metric[:, ii:(ii + prune_m)].float()
                         W_mask.scatter_(1, ii + torch.topk(tmp, prune_n, dim=1, largest=False)[1], True)
             else:
-                sort_res = torch.sort(W_metric, dim=-1, stable=True)
+                sort_res = torch.sort(W_metric, dim=-1, stable=True)  # 升序排序
+                indices = sort_res[1][:, :first]
+                W_mask.scatter_(1, indices, True)  
+                sort_res_ss = torch.sort(torch.abs(ss), dim=-1, stable=True)  # 根据 rho * ss 排序
+                indices_ss = sort_res_ss[1][:, :second]
+                W_mask.scatter_(1, indices_ss, True)
+                # sort_res = torch.sort(W_metric, dim=-1, stable=True)
                 # unstructured pruning
-                indices = sort_res[1][:, :int(W_metric.shape[1] * args.sparsity_ratio)]
-                W_mask.scatter_(1, indices, True)
+                # indices = sort_res[1][:, :int(W_metric.shape[1] * args.sparsity_ratio)]
+                # W_mask.scatter_(1, indices, True)
 
             subset[name].weight.data[W_mask] = 0  ## set weights to zero
 
