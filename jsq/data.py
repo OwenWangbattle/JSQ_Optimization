@@ -20,8 +20,8 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
     # Load train and test datasets
     while True:
         try:
-            traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train', cache_dir='/mnt/disk1/hg/huggingface/cache')
-            testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test', cache_dir='/mnt/disk1/hg/huggingface/cache')
+            traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train', cache_dir='/root/autodl-tmp/cache')
+            testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test', cache_dir='/root/autodl-tmp/cache')
             break
         except Exception as e:
             print(f"Error: {e}")

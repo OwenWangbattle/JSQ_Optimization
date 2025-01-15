@@ -3,7 +3,7 @@ from jsq.smooth import smooth_layer
 from jsq.quantize import quantize_layer
 from jsq.data import get_loaders
 from jsq.layerwrapper import WrappedGPT
-from jsq.utils import find_layers, prepare_calibration_input, clip_matrix, generate_ss
+from jsq.utils import find_layers, prepare_calibration_input, clip_matrix, generate_ss, generate_ss_notchange
 import torch
 
 def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, prune_m=0):
@@ -17,7 +17,6 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
             Falcon = True
 
     print(model)
-    print(model.state_dict().keys())
     print("loading calibdation data")
     dataloader, _ = get_loaders("wikitext2", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
     print("dataset loading complete")
@@ -87,8 +86,10 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
             activation = torch.sqrt(wrapped_layers[name].scaler_row.reshape((1, -1)))
 
             ss = generate_ss(wrapped_layers[name].inp_sum / wrapped_layers[name].inp_num, subset[name].weight.data)
+            ss_not_change = generate_ss_notchange(wrapped_layers[name].inp_sum / wrapped_layers[name].inp_num, subset[name].weight.data)
+            gamma = 0.25
             W_metric = weight * activation
-            W_metric = W_metric + args.rho * ss
+            W_metric = W_metric + args.rho * ss + gamma * (ss - ss_not_change)
 
             W_mask = (torch.zeros_like(W_metric) == 1)
             if prune_n != 0:
@@ -120,9 +121,16 @@ def joint_pq(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, p
 
         print(f"quantizing layer {i}")
         quantize_layer(layer, nbits=args.nbits)
-
+        # layers[i] = layer
         inps, outs = outs, inps
-
+    
+    # if CHATGLM:
+    #     model.transformer.encoder.layers = layers
+    # elif Falcon:
+    #     model.transformer.h = layers
+    # else:
+    #     model.model.layers = layers
+        
     torch.cuda.empty_cache()
 
     return model

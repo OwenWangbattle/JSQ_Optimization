@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument('--seqlen', type=int, default=2048)
     parser.add_argument('--sparsity_ratio', type=float, default=0.5, help='Sparsity level')
     parser.add_argument("--sparsity_type", default="unstructured", type=str, choices=["unstructured", "4:8", "2:4"])
-    parser.add_argument("--cache_dir", default="/mnt/disk1/hg/huggingface/cache", type=str)
+    parser.add_argument("--cache_dir", default="/root/autodl-tmp/cache", type=str)
 
     parser.add_argument('--save', type=str, default=None, help='Path to save results.')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the pruned model.')
