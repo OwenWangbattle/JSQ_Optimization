@@ -1,7 +1,7 @@
 from safetensors import safe_open
 
 # 设置你的 safetensor 文件路径
-file_path = "/root/autodl-tmp/results_2/model-00002-of-00002.safetensors"
+file_path = "/root/autodl-tmp/results_0.5/model-00002-of-00002.safetensors"
 
 import argparse
 import os

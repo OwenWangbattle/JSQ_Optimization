@@ -139,3 +139,16 @@ def generate_ss(activation, weight):
         ss[:, i] = row_ss
     ss = torch.where(torch.isinf(ss), torch.tensor(100), ss)
     return ss
+
+def generate_ss_notchange(activation, weight):
+    cin, cout = weight.shape
+    ss = torch.zeros_like(weight)
+    for i in range(cout):
+        w = copy.deepcopy(weight)
+        out = activation @ (w.t())
+        max_values, _ = torch.max(out, dim=0)
+        min_values, _ = torch.min(out, dim=0)
+        row_ss = (max_values - min_values)
+        ss[:, i] = row_ss
+    ss = torch.where(torch.isinf(ss), torch.tensor(100), ss)
+    return ss
