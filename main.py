@@ -15,8 +15,11 @@ def main(args):
     with safe_open("/root/autodl-tmp/cache/hub/models--huggyllama--llama-7b/snapshots/4782ad278652c7c71b72204d462d6d01eaaf7549/model-00002-of-00002.safetensors", framework="pt") as f:
         metadata2 = f.metadata()
         print("Metadata:", metadata2) 
-    light_model = joint_pq(args, model, tokenizer)
-
+    if args.sparsity_type=="unstructed":
+        
+        light_model = joint_pq(args, model, tokenizer)
+    else:
+        light_model=joint_pq(args, model, tokenizer,prune_n=int(args.sparsity_type[0]),prune_m=int(args.sparsity_type[2]))
     if args.save_model:
         with open('/root/autodl-tmp/results/model.safetensors.index.json', 'r') as f:
             index = json.load(f)
